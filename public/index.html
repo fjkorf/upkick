@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Upkick</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            * {
+                box-sizing: border-box;
+            }
+
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+            }
+
+            body {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                background-color: #0c2e59; /* Deep blue background */
+                font-family: "VT323", monospace;
+                color: #cccccc;
+            }
+
+            #gameCanvas {
+                border: 4px solid #f47521; /* Orange border */
+                background-color: #0c2e59; /* Deep blue */
+                display: none;
+                image-rendering: pixelated;
+                max-width: 100%;
+                max-height: 100%;
+                width: 100%;
+                height: auto;
+                object-fit: contain;
+            }
+
+            #gameScreen {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            #gameInfo {
+                position: absolute;
+                top: 10px;
+                left: 0;
+                right: 0;
+                color: #ffffff;
+                text-align: center;
+                width: 100%;
+                font-family: "Press Start 2P", cursive;
+                font-size: 4vmin;
+                padding: 0 10px;
+                z-index: 10;
+            }
+
+            #controls {
+                position: absolute;
+                bottom: 10px;
+                left: 0;
+                right: 0;
+                color: #0c2e59;
+                text-align: center;
+                width: 100%;
+                display: none;
+                font-family: "VT323", monospace;
+                font-size: 4vmin;
+                padding: 0 10px;
+                z-index: 10;
+            }
+
+            .hidden {
+                display: none !important;
+            }
+
+            /* Title Screen Styles */
+            #titleScreen {
+                text-align: center;
+                width: 90%;
+                max-width: 800px;
+                padding: 20px;
+                background-color: #0a1c35; /* Deeper blue */
+                border: 4px solid #f47521; /* Orange border */
+                position: relative;
+                z-index: 5;
+            }
+
+            h1 {
+                font-size: 10vmin;
+                margin-bottom: 30px;
+                color: #f47521; /* Orange title */
+                text-shadow: 3px 3px 0 #072040;
+                letter-spacing: 4px;
+                font-family: "Press Start 2P", cursive;
+            }
+
+            p {
+                font-family: "VT323", monospace;
+                font-size: 5vmin;
+                color: #4a9fff; /* Light blue */
+            }
+
+            input {
+                width: 80%;
+                max-width: 300px;
+                padding: 12px;
+                border: 3px solid #f47521; /* Orange border */
+                background-color: #0c2e59; /* Blue background */
+                color: #ffffff;
+                border-radius: 0px;
+                margin-bottom: 20px;
+                font-size: 5vmin;
+                text-align: center;
+                font-family: "VT323", monospace;
+            }
+
+            button {
+                background-color: #f47521; /* Orange background */
+                color: #0a1c35; /* Dark blue text */
+                border: none;
+                padding: 15px 30px;
+                border-radius: 0px;
+                cursor: pointer;
+                font-size: 4vmin;
+                font-weight: bold;
+                transition: all 0.2s;
+                font-family: "Press Start 2P", cursive;
+                border: 3px solid #ff8c3a; /* Lighter orange */
+            }
+
+            button:hover {
+                background-color: #ff8c3a; /* Lighter orange on hover */
+                transform: scale(1.05);
+            }
+
+            .subtitle {
+                margin-top: 40px;
+                font-size: 3.5vmin;
+                color: #4a9fff; /* Light blue */
+            }
+
+            .subtitle p {
+                font-size: 3.5vmin;
+                margin: 8px 0;
+            }
+
+            /* Scanline effect - subtle */
+            body::after {
+                content: "";
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: repeating-linear-gradient(
+                    0deg,
+                    rgba(0, 0, 0, 0.07),
+                    rgba(0, 0, 0, 0.07) 1px,
+                    transparent 1px,
+                    transparent 2px
+                );
+                pointer-events: none;
+                z-index: 999;
+            }
+
+            /* Media queries for better responsiveness */
+            @media (max-width: 768px) {
+                #gameCanvas {
+                    border-width: 2px;
+                }
+
+                h1 {
+                    margin-bottom: 15px;
+                }
+
+                .subtitle {
+                    margin-top: 20px;
+                }
+
+                #titleScreen {
+                    padding: 15px;
+                }
+            }
+
+            @media (orientation: landscape) and (max-height: 500px) {
+                h1 {
+                    font-size: 8vmin;
+                    margin-bottom: 10px;
+                }
+
+                p {
+                    font-size: 4vmin;
+                    margin: 5px 0;
+                }
+
+                .subtitle {
+                    margin-top: 10px;
+                }
+
+                input {
+                    padding: 8px;
+                    margin-bottom: 10px;
+                }
+
+                button {
+                    padding: 8px 20px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Title Screen -->
+        <div id="titleScreen">
+            <h1>UPKICK</h1>
+            <p>Enter your nickname to join a game</p>
+            <input
+                type="text"
+                id="nicknameInput"
+                placeholder="Your Nickname"
+                maxlength="15"
+            />
+            <br />
+            <button id="startButton">START GAME</button>
+            <div class="subtitle">
+                <p>Controls: SPACE, touch, tap to jump. Release to dive.</p>
+                <p>First to hit the opponent with a kick wins!</p>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="hidden">
+            <div id="gameInfo">Waiting for opponent...</div>
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+            <div id="controls">
+                Controls: SPACE, click, or touch to jump. Release to dive
+            </div>
+        </div>
+
+        <!-- Preload images -->
+        <link
+            rel="preload"
+            href="assets/Renegade_Idle_1_strip4.png"
+            as="image"
+        />
+        <img
+            id="idleSprite"
+            src="assets/Renegade_Idle_1_strip4.png"
+            class="hidden"
+        />
+        <link
+            rel="preload"
+            href="assets/Renegade_Run_1_strip4.png"
+            as="image"
+        />
+        <img
+            id="runSprite"
+            src="assets/Renegade_Run_1_strip4.png"
+            class="hidden"
+        />
+        <link rel="preload" href="assets/Renegade_Kick_2.png" as="image" />
+        <img id="kickSprite" src="assets/Renegade_Kick_2.png" class="hidden" />
+
+        <script src="main.js"></script>
+    </body>
+</html>
