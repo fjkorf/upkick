@@ -70,6 +70,18 @@
                 z-index: 10;
             }
 
+            #kickIt {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-family: "Press Start 2P", cursive;
+                color: #f47521; /* Orange title */
+                text-shadow: 3px 3px 0 #072040;
+                display: none;
+                font-size: 73px;
+            }
+
             #controls {
                 position: absolute;
                 bottom: 10px;
@@ -246,6 +258,7 @@
         <!-- Game Screen -->
         <div id="gameScreen" class="hidden">
             <div id="gameInfo">Waiting for opponent...</div>
+            <div id="kickIt">Kick It!</div>
             <canvas id="gameCanvas" width="800" height="600"></canvas>
             <div id="controls">
                 Controls: SPACE, click, or touch to jump. Release to dive
