@@ -222,17 +222,15 @@ class GameLogic {
         player2.score++;
         stateChanged = true;
       } else if (player1.isDiving && player2.isDiving) {
-        // If both diving, the one who initiated dive later wins
-        if (player1.velocityY > player2.velocityY) {
+        room.gameState = "round_end";
+        stateChanged = true;
+        // If both diving, the one who is higher wins
+        if (player1.y > player2.y) {
           room.roundWinner = player1.id;
-          room.gameState = "round_end";
           player1.score++;
-          stateChanged = true;
         } else {
           room.roundWinner = player2.id;
-          room.gameState = "round_end";
           player2.score++;
-          stateChanged = true;
         }
       }
     }
@@ -339,8 +337,12 @@ class GameServer {
         room.players[pid].x = i === 0 ? 160 : 560;
         room.players[pid].facingRight = i === 0;
       });
-      room.gameState = "playing";
+      room.gameState = "starting";
       NetworkManager.broadcastGameState(room, this.gameState);
+      setTimeout(() => {
+        room.gameState = "playing";
+        NetworkManager.broadcastGameState(room, this.gameState);
+      }, 2000);
 
       // Start game loop for this room
       this.startGameLoop(room);

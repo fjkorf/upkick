@@ -7,6 +7,7 @@ const ELEMENTS = {
   nicknameInput: document.getElementById("nicknameInput"),
   startButton: document.getElementById("startButton"),
   startMessage: document.getElementById("kickIt"),
+  countdown: document.getElementById("countdown"),
 };
 
 const CTX = ELEMENTS.canvas.getContext("2d");
@@ -99,9 +100,19 @@ function handle_message(event) {
       break;
     }
     case "gameState": {
+      const prevState = game.state;
+
       game.players = data.players;
       game.state = data.gameState;
       game.roundWinner = data.roundWinner;
+
+      if (game.state === "starting" && prevState !== "starting") {
+        ELEMENTS.countdown.textContent = "3";
+        setTimeout(() => (ELEMENTS.countdown.textContent = "2"), 500);
+        setTimeout(() => (ELEMENTS.countdown.textContent = "1"), 1000);
+        setTimeout(() => (ELEMENTS.countdown.textContent = "KICK IT!"), 1500);
+        setTimeout(() => (ELEMENTS.countdown.textContent = ""), 2100);
+      }
 
       update_game_info();
       break;
