@@ -395,7 +395,12 @@ class GameServer {
           const updatedRoom = this.gameState.rooms[roomId];
           if (updatedRoom) {
             GameLogic.resetRound(updatedRoom);
+            room.gameState = "starting";
             NetworkManager.broadcastGameState(updatedRoom, this.gameState);
+            setTimeout(() => {
+              room.gameState = "playing";
+              NetworkManager.broadcastGameState(updatedRoom, this.gameState);
+            }, 2000);
           }
         }, 2000);
       }
