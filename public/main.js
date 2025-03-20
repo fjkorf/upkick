@@ -35,7 +35,7 @@ class GameState {
     this.playerId = null;
     this.roomId = null;
     this.players = {};
-    this.playerRenderPositions = [];
+    this.localPlayers = [];
     this.state = "waiting";
     this.roundWinner = null;
     this.nickname = "";
@@ -108,9 +108,15 @@ function handle_message(event) {
       game.roundWinner = data.roundWinner;
 
       if (game.state === "starting" && prevState !== "starting") {
-        game.playerRenderPositions = [];
+        game.localPlayers = [];
         Object.values(game.players).forEach(
-          (p, i) => (game.playerRenderPositions[i] = { x: p.x, y: p.y }),
+          (p, i) =>
+            (game.localPlayers[i] = {
+              x: p.x,
+              y: p.y,
+              animFrame: 0,
+              lastAnimUpdate: Date.now(),
+            }),
         );
         ELEMENTS.countdown.textContent = "3";
         setTimeout(() => (ELEMENTS.countdown.textContent = "2"), 500);
@@ -348,36 +354,47 @@ function draw_floor() {
 function draw_players() {
   if (game.players && Object.keys(game.players).length > 0) {
     Object.values(game.players).forEach((player, index) => {
+      update_player_animation(player, index);
       draw_player(player, index);
     });
   }
 }
 
-function draw_player(player, playerIndex) {
-  const renderPos = game.playerRenderPositions[playerIndex];
-  const alpha = 0.6;
-  const smoothedX = renderPos.x + (player.x - renderPos.x) * alpha;
-  const smoothedY = renderPos.y + (player.y - renderPos.y) * alpha;
-  renderPos.x = smoothedX;
-  renderPos.y = smoothedY;
+function update_player_animation(player, playerIndex) {
+  const localPlayer = game.localPlayers[playerIndex];
+  if (!player.isJumping && !player.isDiving) {
+    // Only animate idle players
+    const now = Date.now();
+    if (now - localPlayer.lastAnimUpdate > 150) {
+      // Animation speed
+      localPlayer.animFrame = (localPlayer.animFrame + 1) % 4;
+      localPlayer.lastAnimUpdate = now;
+    }
+  }
+}
 
-  // Update the render position for next frame
-  game.playerRenderPositions[playerIndex] = { x: smoothedX, y: smoothedY };
+function draw_player(player, playerIndex) {
+  const localPlayer = game.localPlayers[playerIndex];
+  const alpha = 0.6;
+  const smoothedX = localPlayer.x + (player.x - localPlayer.x) * alpha;
+  const smoothedY = localPlayer.y + (player.y - localPlayer.y) * alpha;
+  localPlayer.x = smoothedX;
+  localPlayer.y = smoothedY;
 
   CTX.save();
 
   // Handle facing direction
   if (!player.facingRight) {
-    CTX.translate(renderPos.x + player.width, 0);
+    CTX.translate(localPlayer.x + player.width, 0);
     CTX.scale(-1, 1);
-    CTX.translate(-renderPos.x, 0);
+    CTX.translate(-localPlayer.x, 0);
   }
   CTX.translate(0, -20);
 
   // Apply a color tint
   CTX.globalAlpha = 0.8;
   CTX.fillStyle = PLAYER_COLORS[playerIndex];
-  CTX.fillRect(renderPos.x, renderPos.y, player.width, player.height);
+  CTX.fillRect(localPlayer.x, localPlayer.y, player.width, player.height);
   CTX.globalAlpha = 1.0;
 
   if (player.isDiving) {
@@ -388,8 +405,8 @@ function draw_player(player, playerIndex) {
       0,
       SPRITE_DIMENSIONS.kick.width,
       SPRITE_DIMENSIONS.kick.height,
-      renderPos.x - 50,
-      renderPos.y,
+      localPlayer.x - 50,
+      localPlayer.y,
       player.width * scaleX,
       player.height,
     );
@@ -401,8 +418,8 @@ function draw_player(player, playerIndex) {
       0,
       SPRITE_DIMENSIONS.run.width,
       SPRITE_DIMENSIONS.run.height,
-      renderPos.x,
-      renderPos.y,
+      localPlayer.x,
+      localPlayer.y,
       player.width,
       player.height,
     );
@@ -410,12 +427,12 @@ function draw_player(player, playerIndex) {
     // Draw idle animation
     CTX.drawImage(
       SPRITES.idle,
-      SPRITE_DIMENSIONS.idle.width * player.animFrame,
+      SPRITE_DIMENSIONS.idle.width * localPlayer.animFrame,
       0,
       SPRITE_DIMENSIONS.idle.width,
       SPRITE_DIMENSIONS.idle.height,
-      renderPos.x,
-      renderPos.y,
+      localPlayer.x,
+      localPlayer.y,
       player.width,
       player.height,
     );
@@ -428,8 +445,8 @@ function draw_player(player, playerIndex) {
   CTX.textAlign = "center";
   CTX.fillText(
     player.nickname,
-    renderPos.x + player.width / 2,
-    renderPos.y - 30,
+    localPlayer.x + player.width / 2,
+    localPlayer.y - 30,
   );
 }
 

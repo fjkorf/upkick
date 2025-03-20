@@ -27,8 +27,6 @@ class Player {
     this.isDiving = false;
     this.score = 0;
     this.facingRight = id % 2 === 1;
-    this.animFrame = 0;
-    this.lastAnimUpdate = Date.now();
   }
 }
 
@@ -145,18 +143,6 @@ class GameLogic {
     }
   }
 
-  static updatePlayerAnimation(player) {
-    if (!player.isJumping && !player.isDiving) {
-      // Only animate idle players
-      const now = Date.now();
-      if (now - player.lastAnimUpdate > 150) {
-        // Animation speed
-        player.animFrame = (player.animFrame + 1) % 4;
-        player.lastAnimUpdate = now;
-      }
-    }
-  }
-
   static resetRound(room) {
     room.getPlayerIds().forEach((playerId, index) => {
       const player = room.players[playerId];
@@ -201,8 +187,8 @@ class GameLogic {
     const player2 = room.players[playerIds[1]];
 
     // Update animations
-    this.updatePlayerAnimation(player1);
-    this.updatePlayerAnimation(player2);
+    // this.updatePlayerAnimation(player1);
+    // this.updatePlayerAnimation(player2);
 
     // Update physics
     this.updatePlayerPhysics(player1);
