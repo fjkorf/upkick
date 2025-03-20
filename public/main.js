@@ -35,6 +35,7 @@ class GameState {
     this.playerId = null;
     this.roomId = null;
     this.players = {};
+    this.playerRenderPositions = [];
     this.state = "waiting";
     this.roundWinner = null;
     this.nickname = "";
@@ -107,6 +108,10 @@ function handle_message(event) {
       game.roundWinner = data.roundWinner;
 
       if (game.state === "starting" && prevState !== "starting") {
+        game.playerRenderPositions = [];
+        Object.values(game.players).forEach(
+          (p, i) => (game.playerRenderPositions[i] = { x: p.x, y: p.y }),
+        );
         ELEMENTS.countdown.textContent = "3";
         setTimeout(() => (ELEMENTS.countdown.textContent = "2"), 500);
         setTimeout(() => (ELEMENTS.countdown.textContent = "1"), 1000);
@@ -149,41 +154,35 @@ function handle_connection_close() {
 function setup_input_handlers() {
   // Keyboard handlers
   document.addEventListener("keydown", (event) => {
-    if (!game.playerId || game.state !== "playing") return;
     if (event.code === "Space") {
-      send_action("jump");
+      do_jump();
     }
   });
 
   document.addEventListener("keyup", (event) => {
-    if (!game.playerId || game.state !== "playing") return;
     if (event.code === "Space") {
-      send_action("dive");
+      do_dive();
     }
   });
 
   // Mouse handlers
   ELEMENTS.canvas.addEventListener("mousedown", () => {
-    if (!game.playerId || game.state !== "playing") return;
-    send_action("jump");
+    do_jump();
   });
 
   ELEMENTS.canvas.addEventListener("mouseup", () => {
-    if (!game.playerId || game.state !== "playing") return;
-    send_action("dive");
+    do_dive();
   });
 
   // Touch handlers for mobile
   ELEMENTS.canvas.addEventListener("touchstart", (event) => {
-    if (!game.playerId || game.state !== "playing") return;
     event.preventDefault(); // Prevent scrolling
-    send_action("jump");
+    do_jump();
   });
 
   ELEMENTS.canvas.addEventListener("touchend", (event) => {
-    if (!game.playerId || game.state !== "playing") return;
     event.preventDefault(); // Prevent scrolling
-    send_action("dive");
+    do_dive();
   });
 }
 
@@ -194,6 +193,17 @@ function send_action(action) {
       action: action,
     }),
   );
+}
+
+function do_jump() {
+  if (!game.playerId || game.state !== "playing") return;
+  send_action("jump");
+  game.players[game.playerId].y -= 20;
+}
+
+function do_dive() {
+  if (!game.playerId || game.state !== "playing") return;
+  send_action("dive");
 }
 
 // Rendering functions
@@ -344,20 +354,30 @@ function draw_players() {
 }
 
 function draw_player(player, playerIndex) {
+  const renderPos = game.playerRenderPositions[playerIndex];
+  const alpha = 0.6;
+  const smoothedX = renderPos.x + (player.x - renderPos.x) * alpha;
+  const smoothedY = renderPos.y + (player.y - renderPos.y) * alpha;
+  renderPos.x = smoothedX;
+  renderPos.y = smoothedY;
+
+  // Update the render position for next frame
+  game.playerRenderPositions[playerIndex] = { x: smoothedX, y: smoothedY };
+
   CTX.save();
 
   // Handle facing direction
   if (!player.facingRight) {
-    CTX.translate(player.x + player.width, 0);
+    CTX.translate(renderPos.x + player.width, 0);
     CTX.scale(-1, 1);
-    CTX.translate(-player.x, 0);
+    CTX.translate(-renderPos.x, 0);
   }
   CTX.translate(0, -20);
 
   // Apply a color tint
   CTX.globalAlpha = 0.8;
   CTX.fillStyle = PLAYER_COLORS[playerIndex];
-  CTX.fillRect(player.x, player.y, player.width, player.height);
+  CTX.fillRect(renderPos.x, renderPos.y, player.width, player.height);
   CTX.globalAlpha = 1.0;
 
   if (player.isDiving) {
@@ -368,8 +388,8 @@ function draw_player(player, playerIndex) {
       0,
       SPRITE_DIMENSIONS.kick.width,
       SPRITE_DIMENSIONS.kick.height,
-      player.x - 50,
-      player.y,
+      renderPos.x - 50,
+      renderPos.y,
       player.width * scaleX,
       player.height,
     );
@@ -381,8 +401,8 @@ function draw_player(player, playerIndex) {
       0,
       SPRITE_DIMENSIONS.run.width,
       SPRITE_DIMENSIONS.run.height,
-      player.x,
-      player.y,
+      renderPos.x,
+      renderPos.y,
       player.width,
       player.height,
     );
@@ -394,8 +414,8 @@ function draw_player(player, playerIndex) {
       0,
       SPRITE_DIMENSIONS.idle.width,
       SPRITE_DIMENSIONS.idle.height,
-      player.x,
-      player.y,
+      renderPos.x,
+      renderPos.y,
       player.width,
       player.height,
     );
@@ -406,7 +426,11 @@ function draw_player(player, playerIndex) {
   CTX.fillStyle = PLAYER_COLORS[playerIndex];
   CTX.font = "12px 'Press Start 2P'";
   CTX.textAlign = "center";
-  CTX.fillText(player.nickname, player.x + player.width / 2, player.y - 30);
+  CTX.fillText(
+    player.nickname,
+    renderPos.x + player.width / 2,
+    renderPos.y - 30,
+  );
 }
 
 function draw_foreground() {
